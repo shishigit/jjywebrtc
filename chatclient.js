@@ -153,8 +153,9 @@ function connect()
                 await handleVideoOfferMsg(msg);
                 break;
 
-            case "video-answer":  // Callee has answered our offer
-                await handleVideoAnswerMsg(msg);
+            case "video-answer":
+                const desc = new RTCSessionDescription(msg.sdp);
+                await myPeerConnection.setRemoteDescription(desc);
                 break;
 
             case "new-ice-candidate": // A new ICE candidate has been received
@@ -361,27 +362,18 @@ async function invite(evt)
         // Get access to the webcam stream and attach it to the
         // "preview" box (id "local_video").
 
-        try
-        {
-            webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-            document.getElementById("local_video").srcObject = webcamStream;
-        } catch (err)
-        {
-            handleGetUserMediaError(err);
-            return;
-        }
+
+        webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        document.getElementById("local_video").srcObject = webcamStream;
+
 
         // Add the tracks from the stream to the RTCPeerConnection
 
-        try
-        {
-            webcamStream.getTracks().forEach(
-                transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
-            );
-        } catch (err)
-        {
-            handleGetUserMediaError(err);
-        }
+
+        webcamStream.getTracks().forEach(
+            transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+        );
+
     }
 }
 
@@ -449,20 +441,6 @@ async function handleVideoOfferMsg(msg)
     });
 }
 
-// Responds to the "video-answer" message sent to the caller
-// once the callee has decided to accept our request to talk.
-
-async function handleVideoAnswerMsg(msg)
-{
-    log("*** Call recipient has accepted our call");
-
-    // Configure the remote description, which is the SDP payload
-    // in our "video-answer" message.
-
-    const desc = new RTCSessionDescription(msg.sdp);
-    await myPeerConnection.setRemoteDescription(desc).catch(reportError);
-}
-
 // A new ICE candidate has been received from the other peer. Call
 // RTCPeerConnection.addIceCandidate() to send it along to the
 // local ICE framework.
@@ -471,44 +449,4 @@ async function handleNewICECandidateMsg(msg)
 {
     const candidate = new RTCIceCandidate(msg.candidate);
     await myPeerConnection.addIceCandidate(candidate)
-}
-
-// Handle errors which occur when trying to access the local media
-// hardware; that is, exceptions thrown by getUserMedia(). The two most
-// likely scenarios are that the user has no camera and/or microphone
-// or that they declined to share their equipment when prompted. If
-// they simply opted not to share their media, that's not really an
-// error, so we won't present a message in that situation.
-
-function handleGetUserMediaError(e)
-{
-    log_error(e);
-    switch (e.name)
-    {
-        case "NotFoundError":
-            alert("Unable to open your call because no camera and/or microphone" +
-                "were found.");
-            break;
-        case "SecurityError":
-        case "PermissionDeniedError":
-            // Do nothing; this is the same as the user canceling the call.
-            break;
-        default:
-            alert("Error opening your camera and/or microphone: " + e.message);
-            break;
-    }
-
-    // Make sure we shut down our end of the RTCPeerConnection so we're
-    // ready to try again.
-
-    closeVideoCall();
-}
-
-// Handles reporting errors. Currently, we just dump stuff to console but
-// in a real-world application, an appropriate (and user-friendly)
-// error message should be displayed.
-
-function reportError(errMessage)
-{
-    log_error(`Error ${errMessage.name}: ${errMessage.message}`);
 }
