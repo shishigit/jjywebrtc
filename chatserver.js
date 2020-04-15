@@ -109,12 +109,8 @@ webServer.listen(6503, function ()
 {
 });
 
-// Create the WebSocket server by converting the HTTPS server into one.
 
-const wsServer = new WebSocketServer({
-    httpServer: webServer,
-    autoAcceptConnections: false
-});
+const wsServer = new WebSocketServer({httpServer: webServer, autoAcceptConnections: false});
 
 // noinspection JSUnresolvedFunction
 wsServer.on('request', function (request)
@@ -134,8 +130,6 @@ wsServer.on('request', function (request)
 
     connection.on('message', function (message)
     {
-
-
 
         let sendToClients = true;
         msg = JSON.parse(message.utf8Data);
@@ -195,28 +189,9 @@ wsServer.on('request', function (request)
         }
     });
 
-    // Handle the WebSocket "close" event; this means a user has logged off
-    // or has been disconnected.
-    connection.on('close', function (reason, description)
+    connection.on('close', function ()
     {
-        // First, remove the connection from the list of connections.
-        connectionArray = connectionArray.filter(function (el)
-        {
-            return el.connected;
-        });
-
-        // Now send the updated user list. Again, please don't do this in a
-        // real application. Your users won't like you very much.
+        connectionArray = connectionArray.filter(el => el.connected);
         sendUserListToAll();
-
-        // Build and output log output for close information.
-
-        let logMessage = "Connection closed: " + connection.remoteAddress + " (" +
-            reason;
-        if (description !== null && description.length !== 0)
-        {
-            logMessage += ": " + description;
-        }
-        logMessage += ")";
     });
 });
