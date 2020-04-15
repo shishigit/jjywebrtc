@@ -470,15 +470,7 @@ async function handleVideoAnswerMsg(msg)
 async function handleNewICECandidateMsg(msg)
 {
     const candidate = new RTCIceCandidate(msg.candidate);
-
-    log("*** Adding received ICE candidate: " + JSON.stringify(candidate));
-    try
-    {
-        await myPeerConnection.addIceCandidate(candidate)
-    } catch (err)
-    {
-        reportError(err);
-    }
+    await myPeerConnection.addIceCandidate(candidate)
 }
 
 // Handle errors which occur when trying to access the local media
