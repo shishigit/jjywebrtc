@@ -106,12 +106,6 @@ function connect()
 
     connection = new WebSocket(serverUrl, "json");
 
-    connection.onopen = function ()
-    {
-        document.getElementById("text").disabled = false;
-        document.getElementById("send").disabled = false;
-    };
-
     connection.onerror = function (evt)
     {
         console.dir(evt);
@@ -119,7 +113,6 @@ function connect()
 
     connection.onmessage = async function (evt)
     {
-        const chatBox = document.querySelector(".chatbox");
         let text = "";
         const msg = JSON.parse(evt.data);
         log("Message received: ");
@@ -177,15 +170,6 @@ function connect()
             default:
                 log_error("Unknown message received:");
                 log_error(msg);
-        }
-
-        // If there's text to insert into the chat buffer, do so now, then
-        // scroll the chat panel so that the new text is visible.
-
-        if (text.length)
-        {
-            chatBox.innerHTML += text;
-            chatBox.scrollTop = chatBox.scrollHeight - chatBox.clientHeight;
         }
     };
 }
@@ -260,8 +244,8 @@ function handleTrackEvent(event)
 {
     log("*** Track event");
     document.getElementById("received_video").srcObject = event.streams[0];
-    document.getElementById("hangup-button").disabled = false;
 }
+
 function handleUserlistMsg(msg)
 {
 
@@ -342,29 +326,6 @@ function handleHangUpMsg()
 
     closeVideoCall();
 }
-
-// Hang up the call by closing our end of the connection, then
-// sending a "hang-up" message to the other peer (keep in mind that
-// the signaling is done on a different connection). This notifies
-// the other peer that the connection should be terminated and the UI
-// returned to the "no call in progress" state.
-
-function hangUpCall()
-{
-    closeVideoCall();
-
-    sendToServer({
-        name: myUsername,
-        target: targetUsername,
-        type: "hang-up"
-    });
-}
-
-// Handle a click on an item in the user list by inviting the clicked
-// user to video chat. Note that we don't actually send a message to
-// the callee here -- calling RTCPeerConnection.addTrack() issues
-// a |notificationneeded| event, so we'll let our handler for that
-// make the offer.
 
 async function invite(evt)
 {
@@ -469,28 +430,11 @@ async function handleVideoOfferMsg(msg)
 
     if (!webcamStream)
     {
-        try
-        {
-            webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        } catch (err)
-        {
-            handleGetUserMediaError(err);
-            return;
-        }
-
+        webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
         document.getElementById("local_video").srcObject = webcamStream;
-
-        // Add the camera stream to the RTCPeerConnection
-
-        try
-        {
-            webcamStream.getTracks().forEach(
-                transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
-            );
-        } catch (err)
-        {
-            handleGetUserMediaError(err);
-        }
+        webcamStream.getTracks().forEach(
+            transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+        );
     }
 
     log("---> Creating and sending answer to caller");
