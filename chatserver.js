@@ -1,6 +1,5 @@
 "use strict";
 
-
 const WebSocketServer = require('ws');
 
 let connectionArray = [];
@@ -23,9 +22,6 @@ function isUsernameUnique(name)
     return isUnique;
 }
 
-// Sends a message (which is already stringified JSON) to a single
-// user, given their username. We use this for the WebRTC signaling,
-// and we could use it for private text messaging.
 function sendToOneUser(target, msgString)
 {
     let i;
@@ -64,8 +60,6 @@ function makeUserListMessage()
         users: []
     };
     let i;
-
-    // Add the users to the list
 
     for (i = 0; i < connectionArray.length; i++)
     {
