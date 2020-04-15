@@ -159,7 +159,8 @@ function connect()
                 break;
 
             case "new-ice-candidate": // A new ICE candidate has been received
-                await handleNewICECandidateMsg(msg);
+                const candidate = new RTCIceCandidate(msg.candidate);
+                await myPeerConnection.addIceCandidate(candidate)
                 break;
 
             default:
@@ -212,6 +213,7 @@ async function createPeerConnection()
             sdp: myPeerConnection.localDescription
         });
     }
+
     myPeerConnection.ontrack = function (event)
     {
         document.getElementById("received_video").srcObject = event.streams[0];
@@ -238,20 +240,13 @@ function handleUserlistMsg(msg)
 
 async function invite(evt)
 {
-    log("Starting to prepare an invitation");
-    if (myPeerConnection)
-    {
-        alert("You can't start a call because you already have one open!");
-    } else
-    {
-        targetUsername = evt.target.textContent;
-        await createPeerConnection();
-        webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
-        document.getElementById("local_video").srcObject = webcamStream;
-        webcamStream.getTracks().forEach(
-            transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
-        );
-    }
+    targetUsername = evt.target.textContent;
+    await createPeerConnection();
+    webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    document.getElementById("local_video").srcObject = webcamStream;
+    webcamStream.getTracks().forEach(
+        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+    );
 }
 
 async function handleVideoOfferMsg(msg)
@@ -296,10 +291,4 @@ async function handleVideoOfferMsg(msg)
         type: "video-answer",
         sdp: myPeerConnection.localDescription
     });
-}
-
-async function handleNewICECandidateMsg(msg)
-{
-    const candidate = new RTCIceCandidate(msg.candidate);
-    await myPeerConnection.addIceCandidate(candidate)
 }
