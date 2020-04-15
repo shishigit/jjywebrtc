@@ -4,24 +4,6 @@ const WebSocketServer = require('ws');
 
 let connectionArray = [];
 let lianjieid = Date.now();
-let appendToMakeUnique = 1;
-
-function isUsernameUnique(name)
-{
-    let isUnique = true;
-    let i;
-
-    for (i = 0; i < connectionArray.length; i++)
-    {
-        if (connectionArray[i].username === name)
-        {
-            isUnique = false;
-            break;
-        }
-    }
-    return isUnique;
-}
-
 function sendToOneUser(target, msgString)
 {
     let i;
@@ -75,14 +57,11 @@ wsServer.on('connection', function (connection)
         let msg = JSON.parse(message);
         const connect = getConnectionForID(msg.id);
 
-        switch (msg.type)
+        if (msg.type === "message")
         {
-            case "message":
-                msg.name = connect.username;
-                msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
-                break;
+            msg.name = connect.username;
+            msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
         }
-
 
         if (sendToClients)
         {
