@@ -5,12 +5,10 @@ let clientID = 0;
 
 let myUsername = null;
 let targetUsername = null;      // To store username of other peer
-let myPeerConnection = null;    // RTCPeerConnection
+let peerConnection = null;    // RTCPeerConnection
 let transceiver = null;         // RTCRtpTransceiver
 let webcamStream = null;        // MediaStream from webcam
 
-// Send a JavaScript object by converting it to JSON and sending
-// it as a message on the WebSocket connection.
 
 function sendToServer(msg)
 {
@@ -64,12 +62,12 @@ function connect()
 
             case "video-answer":
                 const desc = new RTCSessionDescription(msg.sdp);
-                await myPeerConnection.setRemoteDescription(desc);
+                await peerConnection.setRemoteDescription(desc);
                 break;
 
             case "new-ice-candidate":
                 const candidate = new RTCIceCandidate(msg.candidate);
-                await myPeerConnection.addIceCandidate(candidate)
+                await peerConnection.addIceCandidate(candidate)
                 break;
 
             default:
@@ -80,9 +78,9 @@ function connect()
 
 async function createPeerConnection()
 {
-    myPeerConnection = new RTCPeerConnection();
+    peerConnection = new RTCPeerConnection();
 
-    myPeerConnection.onicecandidate = function (event)
+    peerConnection.onicecandidate = function (event)
     {
         if (event.candidate)
         {
@@ -94,26 +92,26 @@ async function createPeerConnection()
         }
     }
 
-    myPeerConnection.onnegotiationneeded = async function ()
+    peerConnection.onnegotiationneeded = async function ()
     {
-        const offer = await myPeerConnection.createOffer();
+        const offer = await peerConnection.createOffer();
 
-        if (myPeerConnection.signalingState !== "stable")
+        if (peerConnection.signalingState !== "stable")
         {
             return;
         }
 
-        await myPeerConnection.setLocalDescription(offer);
+        await peerConnection.setLocalDescription(offer);
 
         sendToServer({
             name: myUsername,
             target: targetUsername,
             type: "video-offer",
-            sdp: myPeerConnection.localDescription
+            sdp: peerConnection.localDescription
         });
     }
 
-    myPeerConnection.ontrack = function (event)
+    peerConnection.ontrack = function (event)
     {
         document.getElementById("received_video").srcObject = event.streams[0];
     }
@@ -144,7 +142,7 @@ async function invite(evt)
     webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
     document.getElementById("local_video").srcObject = webcamStream;
     webcamStream.getTracks().forEach(
-        transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+        transceiver = track => peerConnection.addTransceiver(track, {streams: [webcamStream]})
     );
 }
 
@@ -152,7 +150,7 @@ async function handleVideoOfferMsg(msg)
 {
     targetUsername = msg.name;
 
-    if (!myPeerConnection)
+    if (!peerConnection)
     {
         await createPeerConnection();
     }
@@ -160,15 +158,15 @@ async function handleVideoOfferMsg(msg)
     const desc = new RTCSessionDescription(msg.sdp);
 
 
-    if (myPeerConnection.signalingState !== "stable")
+    if (peerConnection.signalingState !== "stable")
     {
         await Promise.all([
-            myPeerConnection.setLocalDescription({type: "rollback"}),
-            myPeerConnection.setRemoteDescription(desc)
+            peerConnection.setLocalDescription({type: "rollback"}),
+            peerConnection.setRemoteDescription(desc)
         ]);
         return;
     }
-    await myPeerConnection.setRemoteDescription(desc);
+    await peerConnection.setRemoteDescription(desc);
 
 
     if (!webcamStream)
@@ -176,17 +174,17 @@ async function handleVideoOfferMsg(msg)
         webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
         document.getElementById("local_video").srcObject = webcamStream;
         webcamStream.getTracks().forEach(
-            transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
+            transceiver = track => peerConnection.addTransceiver(track, {streams: [webcamStream]})
         );
     }
 
 
-    await myPeerConnection.setLocalDescription(await myPeerConnection.createAnswer());
+    await peerConnection.setLocalDescription(await peerConnection.createAnswer());
 
     sendToServer({
         name: myUsername,
         target: targetUsername,
         type: "video-answer",
-        sdp: myPeerConnection.localDescription
+        sdp: peerConnection.localDescription
     });
 }
