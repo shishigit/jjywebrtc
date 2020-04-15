@@ -116,11 +116,7 @@ const wsServer = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-if (!wsServer)
-{
-    log("ERROR: Unable to create WbeSocket server!");
-}
-
+// noinspection JSUnresolvedFunction
 wsServer.on('request', function (request)
 {
     const connection = request.accept("json", request.origin);
@@ -139,7 +135,6 @@ wsServer.on('request', function (request)
     connection.on('message', function (message)
     {
 
-        log("Received Message: " + message.utf8Data);
 
 
         let sendToClients = true;
@@ -171,6 +166,7 @@ wsServer.on('request', function (request)
                         type: "rejectusername",
                         name: msg.name
                     };
+                    // noinspection JSUnresolvedFunction
                     connect.sendUTF(JSON.stringify(changeMsg));
                 }
 
@@ -222,6 +218,5 @@ wsServer.on('request', function (request)
             logMessage += ": " + description;
         }
         logMessage += ")";
-        log(logMessage);
     });
 });
