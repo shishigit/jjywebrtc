@@ -1,75 +1,14 @@
-// WebSocket and WebRTC based multi-user chat sample with two-way video
-// calling, including use of TURN if applicable or necessary.
-//
-// This file contains the JavaScript code that implements the client-side
-// features for connecting and managing chat and video calls.
-//
-// To read about how this sample works:  http://bit.ly/webrtc-from-chat
-//
-// Any copyright is dedicated to the Public Domain.
-// http://creativecommons.org/publicdomain/zero/1.0/
-
 "use strict";
 
-// Get our hostname
-
 let myHostname = window.location.hostname;
-if (!myHostname)
-{
-    myHostname = "localhost";
-}
-log("Hostname: " + myHostname);
-
-// WebSocket chat/signaling channel variables.
-
 let connection = null;
 let clientID = 0;
-
-// The media constraints object describes what sort of stream we want
-// to request from the local A/V hardware (typically a webcam and
-// microphone). Here, we specify only that we want both audio and
-// video; however, you can be more specific. It's possible to state
-// that you would prefer (or require) specific resolutions of video,
-// whether to prefer the user-facing or rear-facing camera (if available),
-// and so on.
-//
-// See also:
-// https://developer.mozilla.org/en-US/docs/Web/API/MediaStreamConstraints
-// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
-//
-
-const mediaConstraints = {
-    audio: true,            // We want an audio track
-    video: {
-        aspectRatio: {
-            ideal: 1.333333     // 3:2 aspect is preferred
-        }
-    }
-};
 
 let myUsername = null;
 let targetUsername = null;      // To store username of other peer
 let myPeerConnection = null;    // RTCPeerConnection
 let transceiver = null;         // RTCRtpTransceiver
 let webcamStream = null;        // MediaStream from webcam
-
-// Output logging information to console.
-
-function log(text)
-{
-    const time = new Date();
-
-    console.log("[" + time.toLocaleTimeString() + "] " + text);
-}
-
-// Output an error message to console.
-
-function log_error(text)
-{
-    const time = new Date();
-
-    console.trace("[" + time.toLocaleTimeString() + "] " + text);
-}
 
 // Send a JavaScript object by converting it to JSON and sending
 // it as a message on the WebSocket connection.
@@ -78,14 +17,9 @@ function sendToServer(msg)
 {
     const msgJSON = JSON.stringify(msg);
 
-    log("Sending '" + msg.type + "' message: " + msgJSON);
     connection.send(msgJSON);
 }
 
-// Called when the "id" message is received; this message is sent by the
-// server to assign this login session a unique ID number; in response,
-// this function sends a "username" message to set our username for this
-// session.
 function setUsername()
 {
     myUsername = document.getElementById("name").value;
@@ -97,8 +31,6 @@ function setUsername()
         type: "username"
     });
 }
-
-// Open and configure the connection to the WebSocket server.
 
 function connect()
 {
@@ -114,10 +46,7 @@ function connect()
     connection.onmessage = async function (evt)
     {
         const msg = JSON.parse(evt.data);
-        log("Message received: ");
         console.dir(msg);
-        const time = new Date(msg.date);
-        const timeStr = time.toLocaleTimeString();
 
         switch (msg.type)
         {
@@ -129,7 +58,6 @@ function connect()
             case "userlist":
                 handleUserlistMsg(msg);
                 break;
-
 
             case "video-offer":
                 await handleVideoOfferMsg(msg);
@@ -146,8 +74,7 @@ function connect()
                 break;
 
             default:
-                log_error("Unknown message received:");
-                log_error(msg);
+                console.error('未处理的信息：', msg)
         }
     };
 }
@@ -163,7 +90,6 @@ async function createPeerConnection()
             }
         ]
     });
-
 
     myPeerConnection.onicecandidate = function (event)
     {
@@ -224,7 +150,7 @@ async function invite(evt)
 {
     targetUsername = evt.target.textContent;
     await createPeerConnection();
-    webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+    webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
     document.getElementById("local_video").srcObject = webcamStream;
     webcamStream.getTracks().forEach(
         transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
@@ -257,7 +183,7 @@ async function handleVideoOfferMsg(msg)
 
     if (!webcamStream)
     {
-        webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
         document.getElementById("local_video").srcObject = webcamStream;
         webcamStream.getTracks().forEach(
             transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
