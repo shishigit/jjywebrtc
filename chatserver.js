@@ -115,48 +115,7 @@ function sendUserListToAll()
     }
 }
 
-
-// Try to load the key and certificate files for SSL so we can
-// do HTTPS (required for non-local WebRTC).
-
-const httpsOptions = {
-    key: null,
-    cert: null
-};
-
-// If we were able to get the key and certificate files, try to
-// start up an HTTPS server.
-
-let webServer = null;
-
-try
-{
-    if (httpsOptions.key && httpsOptions.cert)
-    {
-        webServer = https.createServer(httpsOptions, handleWebRequest);
-    }
-} catch (err)
-{
-    webServer = null;
-}
-
-if (!webServer)
-{
-    try
-    {
-        webServer = http.createServer({}, handleWebRequest);
-    } catch (err)
-    {
-        webServer = null;
-        log(`Error attempting to create HTTP(s) server: ${err.toString()}`);
-    }
-}
-
-
-// Our HTTPS server does nothing but service WebSocket
-// connections, so every request just returns 404. Real Web
-// requests are handled by the main server on the box. If you
-// want to, you can return real HTML here and serve Web content.
+let webServer = http.createServer({}, handleWebRequest);
 
 function handleWebRequest(request, response)
 {
@@ -185,33 +144,17 @@ if (!wsServer)
     log("ERROR: Unable to create WbeSocket server!");
 }
 
-// Set up a "connect" message handler on our WebSocket server. This is
-// called whenever a user connects to the server's port using the
-// WebSocket protocol.
-
 wsServer.on('request', function (request)
 {
-    if (!originIsAllowed())
-    {
-        request.reject();
-        log("Connection from " + request.origin + " rejected.");
-        return;
-    }
-
-    // Accept the request and get a connection.
 
     const connection = request.accept("json", request.origin);
 
-    // Add the new connection to our list of connections.
 
-    log("Connection accepted from " + connection.remoteAddress + ".");
     connectionArray.push(connection);
 
     connection.clientID = nextID;
     nextID++;
 
-    // Send the new client its token; it send back a "username" message to
-    // tell us what username they want to use.
 
     let msg = {
         type: "id",
@@ -219,96 +162,64 @@ wsServer.on('request', function (request)
     };
     connection.sendUTF(JSON.stringify(msg));
 
-    // Set up a handler for the "message" event received over WebSocket. This
-    // is a message sent by a client, and may be text to share with other
-    // users, a private message (text or signaling) for one user, or a command
-    // to the server.
-
     connection.on('message', function (message)
     {
-        if (message.type === 'utf8')
+
+        log("Received Message: " + message.utf8Data);
+
+
+        let sendToClients = true;
+        msg = JSON.parse(message.utf8Data);
+        const connect = getConnectionForID(msg.id);
+
+        switch (msg.type)
         {
-            log("Received Message: " + message.utf8Data);
+            case "message":
+                msg.name = connect.username;
+                msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
+                break;
 
-            // Process incoming data.
+            case "username":
+                let nameChanged = false;
+                const origName = msg.name;
 
-            let sendToClients = true;
-            msg = JSON.parse(message.utf8Data);
-            const connect = getConnectionForID(msg.id);
-
-            // Take a look at the incoming object and act on it based
-            // on its type. Unknown message types are passed through,
-            // since they may be used to implement client-side features.
-            // Messages with a "target" property are sent only to a user
-            // by that name.
-
-            switch (msg.type)
-            {
-                // Public, textual message
-                case "message":
-                    msg.name = connect.username;
-                    msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
-                    break;
-
-                // Username change
-                case "username":
-                    let nameChanged = false;
-                    const origName = msg.name;
-
-                    // Ensure the name is unique by appending a number to it
-                    // if it's not; keep trying that until it works.
-                    while (!isUsernameUnique(msg.name))
-                    {
-                        msg.name = origName + appendToMakeUnique;
-                        appendToMakeUnique++;
-                        nameChanged = true;
-                    }
-
-                    // If the name had to be changed, we send a "rejectusername"
-                    // message back to the user so they know their name has been
-                    // altered by the server.
-                    if (nameChanged)
-                    {
-                        const changeMsg = {
-                            id: msg.id,
-                            type: "rejectusername",
-                            name: msg.name
-                        };
-                        connect.sendUTF(JSON.stringify(changeMsg));
-                    }
-
-                    // Set this connection's final username and send out the
-                    // updated user list to all users. Yeah, we're sending a full
-                    // list instead of just updating. It's horribly inefficient
-                    // but this is a demo. Don't do this in a real app.
-                    connect.username = msg.name;
-                    sendUserListToAll();
-                    sendToClients = false;  // We already sent the proper responses
-                    break;
-            }
-
-            // Convert the revised message back to JSON and send it out
-            // to the specified client or all clients, as appropriate. We
-            // pass through any messages not specifically handled
-            // in the select block above. This allows the clients to
-            // exchange signaling and other control objects unimpeded.
-
-            if (sendToClients)
-            {
-                const msgString = JSON.stringify(msg);
-                let i;
-
-                // If the message specifies a target username, only send the
-                // message to them. Otherwise, send it to every user.
-                if (msg.target && msg.target !== undefined && msg.target.length !== 0)
+                while (!isUsernameUnique(msg.name))
                 {
-                    sendToOneUser(msg.target, msgString);
-                } else
+                    msg.name = origName + appendToMakeUnique;
+                    appendToMakeUnique++;
+                    nameChanged = true;
+                }
+
+                if (nameChanged)
                 {
-                    for (i = 0; i < connectionArray.length; i++)
-                    {
-                        connectionArray[i].sendUTF(msgString);
-                    }
+                    const changeMsg = {
+                        id: msg.id,
+                        type: "rejectusername",
+                        name: msg.name
+                    };
+                    connect.sendUTF(JSON.stringify(changeMsg));
+                }
+
+                connect.username = msg.name;
+                sendUserListToAll();
+                sendToClients = false;
+                break;
+        }
+
+
+        if (sendToClients)
+        {
+            const msgString = JSON.stringify(msg);
+            let i;
+
+            if (msg.target && msg.target.length !== 0)
+            {
+                sendToOneUser(msg.target, msgString);
+            } else
+            {
+                for (i = 0; i < connectionArray.length; i++)
+                {
+                    connectionArray[i].sendUTF(msgString);
                 }
             }
         }

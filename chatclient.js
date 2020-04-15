@@ -113,7 +113,6 @@ function connect()
 
     connection.onmessage = async function (evt)
     {
-        let text = "";
         const msg = JSON.parse(evt.data);
         log("Message received: ");
         console.dir(msg);
@@ -127,29 +126,12 @@ function connect()
                 setUsername();
                 break;
 
-            case "username":
-                text = "<b>User <em>" + msg.name + "</em> signed in at " + timeStr + "</b><br>";
-                break;
-
-            case "message":
-                text = "(" + timeStr + ") <b>" + msg.name + "</b>: " + msg.text + "<br>";
-                break;
-
-            case "rejectusername":
-                myUsername = msg.name;
-                text = "<b>Your username has been set to <em>" + myUsername +
-                    "</em> because the name you chose is in use.</b><br>";
-                break;
-
-            case "userlist":      // Received an updated user list
+            case "userlist":
                 handleUserlistMsg(msg);
                 break;
 
-            // Signaling messages: these messages are used to trade WebRTC
-            // signaling information during negotiations leading up to a video
-            // call.
 
-            case "video-offer":  // Invitation and offer to chat
+            case "video-offer":
                 await handleVideoOfferMsg(msg);
                 break;
 
@@ -158,7 +140,7 @@ function connect()
                 await myPeerConnection.setRemoteDescription(desc);
                 break;
 
-            case "new-ice-candidate": // A new ICE candidate has been received
+            case "new-ice-candidate":
                 const candidate = new RTCIceCandidate(msg.candidate);
                 await myPeerConnection.addIceCandidate(candidate)
                 break;
