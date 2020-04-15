@@ -162,12 +162,6 @@ function connect()
                 await handleNewICECandidateMsg(msg);
                 break;
 
-            case "hang-up": // The other peer has hung up the call
-                handleHangUpMsg();
-                break;
-
-            // Unknown message; output to console for debugging.
-
             default:
                 log_error("Unknown message received:");
                 log_error(msg);
@@ -211,34 +205,27 @@ async function createPeerConnection()
 
 async function handleNegotiationNeededEvent()
 {
-    log("*** Negotiation needed");
 
-    try
+    log("---> Creating offer");
+    const offer = await myPeerConnection.createOffer();
+
+    if (myPeerConnection.signalingState !== "stable")
     {
-        log("---> Creating offer");
-        const offer = await myPeerConnection.createOffer();
-
-        if (myPeerConnection.signalingState !== "stable")
-        {
-            log("     -- The connection isn't stable yet; postponing...")
-            return;
-        }
-
-        log("---> Setting local description to the offer");
-        await myPeerConnection.setLocalDescription(offer);
-
-        log("---> Sending the offer to the remote peer");
-        sendToServer({
-            name: myUsername,
-            target: targetUsername,
-            type: "video-offer",
-            sdp: myPeerConnection.localDescription
-        });
-    } catch (err)
-    {
-        log("*** The following error occurred while handling the negotiationneeded event:");
-        reportError(err);
+        log("     -- The connection isn't stable yet; postponing...")
+        return;
     }
+
+    log("---> Setting local description to the offer");
+    await myPeerConnection.setLocalDescription(offer);
+
+    log("---> Sending the offer to the remote peer");
+    sendToServer({
+        name: myUsername,
+        target: targetUsername,
+        type: "video-offer",
+        sdp: myPeerConnection.localDescription
+    });
+
 }
 
 function handleTrackEvent(event)
@@ -265,67 +252,6 @@ function handleUserlistMsg(msg)
 
         listElem.appendChild(item);
     });
-}
-
-function closeVideoCall()
-{
-    const localVideo = document.getElementById("local_video");
-
-    log("Closing the call");
-
-
-    if (myPeerConnection)
-    {
-        log("--> Closing the peer connection");
-
-        myPeerConnection.ontrack = null;
-        myPeerConnection.onnicecandidate = null;
-        myPeerConnection.oniceconnectionstatechange = null;
-        myPeerConnection.onsignalingstatechange = null;
-        myPeerConnection.onicegatheringstatechange = null;
-        myPeerConnection.onnotificationneeded = null;
-
-        // Stop all transceivers on the connection
-
-        myPeerConnection.getTransceivers().forEach(transceiver =>
-        {
-            transceiver.stop();
-        });
-
-        // Stop the webcam preview as well by pausing the <video>
-        // element, then stopping each of the getUserMedia() tracks
-        // on it.
-
-        if (localVideo.srcObject)
-        {
-            localVideo.pause();
-            localVideo.srcObject.getTracks().forEach(track =>
-            {
-                track.stop();
-            });
-        }
-
-        // Close the peer connection
-
-        myPeerConnection.close();
-        myPeerConnection = null;
-        webcamStream = null;
-    }
-
-    // Disable the hangup button
-
-    document.getElementById("hangup-button").disabled = true;
-    targetUsername = null;
-}
-
-// Handle the "hang-up" message, which is sent if the other peer
-// has hung up the call or otherwise disconnected.
-
-function handleHangUpMsg()
-{
-    log("*** Received hang up notification from other peer");
-
-    closeVideoCall();
 }
 
 async function invite(evt)
