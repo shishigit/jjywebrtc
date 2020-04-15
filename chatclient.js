@@ -1,6 +1,5 @@
 "use strict";
 
-let myHostname = window.location.hostname;
 let connection = null;
 let clientID = 0;
 
@@ -34,7 +33,7 @@ function setUsername()
 
 function connect()
 {
-    const serverUrl = "ws://" + myHostname + ":6503";
+    const serverUrl = "ws://" + window.location.hostname + ":6503";
 
     connection = new WebSocket(serverUrl, "json");
 
@@ -81,15 +80,7 @@ function connect()
 
 async function createPeerConnection()
 {
-    myPeerConnection = new RTCPeerConnection({
-        iceServers: [
-            {
-                urls: "turn:" + myHostname,
-                username: "webrtc",
-                credential: "turnserver"
-            }
-        ]
-    });
+    myPeerConnection = new RTCPeerConnection();
 
     myPeerConnection.onicecandidate = function (event)
     {
@@ -165,7 +156,6 @@ async function handleVideoOfferMsg(msg)
     {
         await createPeerConnection();
     }
-
 
     const desc = new RTCSessionDescription(msg.sdp);
 
