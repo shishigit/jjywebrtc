@@ -196,18 +196,30 @@ async function createPeerConnection()
 
 
     myPeerConnection = new RTCPeerConnection({
-        iceServers: [     // Information about ICE servers - Use your own!
+        iceServers: [
             {
-                urls: "turn:" + myHostname,  // A TURN server
+                urls: "turn:" + myHostname,
                 username: "webrtc",
                 credential: "turnserver"
             }
         ]
     });
 
-    // Set up event handlers for the ICE negotiation process.
 
-    myPeerConnection.onicecandidate = handleICECandidateEvent;
+    myPeerConnection.onicecandidate = function (event)
+    {
+        if (event.candidate)
+        {
+            log("*** Outgoing ICE candidate: " + event.candidate.candidate);
+
+            sendToServer({
+                type: "new-ice-candidate",
+                target: targetUsername,
+                candidate: event.candidate
+            });
+        }
+    }
+
     myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
     myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
     myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
@@ -264,20 +276,6 @@ function handleTrackEvent(event)
     log("*** Track event");
     document.getElementById("received_video").srcObject = event.streams[0];
     document.getElementById("hangup-button").disabled = false;
-}
-
-function handleICECandidateEvent(event)
-{
-    if (event.candidate)
-    {
-        log("*** Outgoing ICE candidate: " + event.candidate.candidate);
-
-        sendToServer({
-            type: "new-ice-candidate",
-            target: targetUsername,
-            candidate: event.candidate
-        });
-    }
 }
 
 function handleICEConnectionStateChangeEvent()
