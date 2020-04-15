@@ -3,7 +3,7 @@
 const WebSocketServer = require('ws');
 
 let connectionArray = [];
-let nextID = Date.now();
+let lianjieid = Date.now();
 let appendToMakeUnique = 1;
 
 function isUsernameUnique(name)
@@ -38,19 +38,7 @@ function sendToOneUser(target, msgString)
 
 function getConnectionForID(id)
 {
-    let connect = null;
-    let i;
-
-    for (i = 0; i < connectionArray.length; i++)
-    {
-        if (connectionArray[i].clientID === id)
-        {
-            connect = connectionArray[i];
-            break;
-        }
-    }
-
-    return connect;
+    return connectionArray.filter(value => value.clientID === id).pop()
 }
 
 function makeUserListMessage()
@@ -81,16 +69,15 @@ function sendUserListToAll()
     }
 }
 
-
-// noinspection JSCheckFunctionSignatures
-const wsServer = new WebSocketServer.Server({port: 6503}, null);
+const wsServer = new WebSocketServer.Server({port: 6503}, () => console.log('系统启动'));
 
 wsServer.on('connection', function (connection)
 {
     connectionArray.push(connection);
-    connection.clientID = nextID;
-    nextID++;
+    connection.clientID = lianjieid;
+    lianjieid++;
 
+    // 设定ID
     connection.send(JSON.stringify({
         type: "id",
         id: connection.clientID
