@@ -47,8 +47,7 @@ function connect()
                 break;
 
             case "new-ice-candidate":
-                const candidate = new RTCIceCandidate(msg.candidate);
-                await peerConnection.addIceCandidate(candidate)
+                await peerConnection.addIceCandidate(new RTCIceCandidate(msg.candidate))
                 break;
 
             default:

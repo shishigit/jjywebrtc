@@ -43,23 +43,13 @@ function getConnectionForID(id)
 
 function sendUserListToAll()
 {
-    const userListMsg = {
+    const yonghuliebiao = {
         type: "userlist",
         users: []
     };
-    let i;
-
-    for (i = 0; i < connectionArray.length; i++)
-    {
-        userListMsg.users.push(connectionArray[i].username);
-    }
-
-    const userListMsgStr = JSON.stringify(userListMsg);
-
-    for (i = 0; i < connectionArray.length; i++)
-    {
-        connectionArray[i].send(userListMsgStr);
-    }
+    connectionArray.forEach(value => yonghuliebiao.users.push(value.username))
+    const userListMsgStr = JSON.stringify(yonghuliebiao);
+    connectionArray.forEach(value => value.send(userListMsgStr))
 }
 
 const wsServer = new WebSocketServer.Server({port: 6503}, () => console.log('系统启动'));
