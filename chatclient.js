@@ -196,40 +196,30 @@ async function createPeerConnection()
 
     myPeerConnection.onnegotiationneeded = async function ()
     {
-
-        log("---> Creating offer");
         const offer = await myPeerConnection.createOffer();
 
         if (myPeerConnection.signalingState !== "stable")
         {
-            log("     -- The connection isn't stable yet; postponing...")
             return;
         }
 
-        log("---> Setting local description to the offer");
         await myPeerConnection.setLocalDescription(offer);
 
-        log("---> Sending the offer to the remote peer");
         sendToServer({
             name: myUsername,
             target: targetUsername,
             type: "video-offer",
             sdp: myPeerConnection.localDescription
         });
-
     }
-    ;
     myPeerConnection.ontrack = function (event)
     {
-        log("*** Track event");
         document.getElementById("received_video").srcObject = event.streams[0];
     }
-    ;
 }
 
 function handleUserlistMsg(msg)
 {
-
     const listElem = document.querySelector(".userlistbox");
 
     while (listElem.firstChild)
@@ -242,7 +232,6 @@ function handleUserlistMsg(msg)
         const item = document.createElement("li");
         item.appendChild(document.createTextNode(username));
         item.addEventListener("click", invite, false);
-
         listElem.appendChild(item);
     });
 }
@@ -255,89 +244,39 @@ async function invite(evt)
         alert("You can't start a call because you already have one open!");
     } else
     {
-        const clickedUsername = evt.target.textContent;
-
-        // Don't allow users to call themselves, because weird.
-
-        if (clickedUsername === myUsername)
-        {
-            alert("I'm afraid I can't let you talk to yourself. That would be weird.");
-            return;
-        }
-
-        // Record the username being called for future reference
-
-        targetUsername = clickedUsername;
-        log("Inviting user " + targetUsername);
-
-        // Call createPeerConnection() to create the RTCPeerConnection.
-        // When this returns, myPeerConnection is our RTCPeerConnection
-        // and webcamStream is a stream coming from the camera. They are
-        // not linked together in any way yet.
-
-        log("Setting up connection to invite user: " + targetUsername);
+        targetUsername = evt.target.textContent;
         await createPeerConnection();
-
-        // Get access to the webcam stream and attach it to the
-        // "preview" box (id "local_video").
-
-
         webcamStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
         document.getElementById("local_video").srcObject = webcamStream;
-
-
-        // Add the tracks from the stream to the RTCPeerConnection
-
-
         webcamStream.getTracks().forEach(
             transceiver = track => myPeerConnection.addTransceiver(track, {streams: [webcamStream]})
         );
-
     }
 }
-
-// Accept an offer to video chat. We configure our local settings,
-// create our RTCPeerConnection, get and attach our local camera
-// stream, then create and send an answer to the caller.
 
 async function handleVideoOfferMsg(msg)
 {
     targetUsername = msg.name;
 
-    // If we're not already connected, create an RTCPeerConnection
-    // to be linked to the caller.
-
-    log("Received video chat offer from " + targetUsername);
     if (!myPeerConnection)
     {
         await createPeerConnection();
     }
 
-    // We need to set the remote description to the received SDP offer
-    // so that our local WebRTC layer knows how to talk to the caller.
 
     const desc = new RTCSessionDescription(msg.sdp);
 
-    // If the connection isn't stable yet, wait for it...
 
     if (myPeerConnection.signalingState !== "stable")
     {
-        log("  - But the signaling state isn't stable, so triggering rollback");
-
-        // Set the local and remove descriptions for rollback; don't proceed
-        // until both return.
         await Promise.all([
             myPeerConnection.setLocalDescription({type: "rollback"}),
             myPeerConnection.setRemoteDescription(desc)
         ]);
         return;
-    } else
-    {
-        log("  - Setting remote description");
-        await myPeerConnection.setRemoteDescription(desc);
     }
+    await myPeerConnection.setRemoteDescription(desc);
 
-    // Get the webcam stream if we don't already have it
 
     if (!webcamStream)
     {
@@ -348,7 +287,6 @@ async function handleVideoOfferMsg(msg)
         );
     }
 
-    log("---> Creating and sending answer to caller");
 
     await myPeerConnection.setLocalDescription(await myPeerConnection.createAnswer());
 
@@ -359,10 +297,6 @@ async function handleVideoOfferMsg(msg)
         sdp: myPeerConnection.localDescription
     });
 }
-
-// A new ICE candidate has been received from the other peer. Call
-// RTCPeerConnection.addIceCandidate() to send it along to the
-// local ICE framework.
 
 async function handleNewICECandidateMsg(msg)
 {
