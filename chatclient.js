@@ -13,7 +13,7 @@
 
 // Get our hostname
 
-var myHostname = window.location.hostname;
+let myHostname = window.location.hostname;
 if (!myHostname)
 {
     myHostname = "localhost";
@@ -22,8 +22,8 @@ log("Hostname: " + myHostname);
 
 // WebSocket chat/signaling channel variables.
 
-var connection = null;
-var clientID = 0;
+let connection = null;
+let clientID = 0;
 
 // The media constraints object describes what sort of stream we want
 // to request from the local A/V hardware (typically a webcam and
@@ -38,7 +38,7 @@ var clientID = 0;
 // https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
 //
 
-var mediaConstraints = {
+const mediaConstraints = {
     audio: true,            // We want an audio track
     video: {
         aspectRatio: {
@@ -47,17 +47,17 @@ var mediaConstraints = {
     }
 };
 
-var myUsername = null;
-var targetUsername = null;      // To store username of other peer
-var myPeerConnection = null;    // RTCPeerConnection
-var transceiver = null;         // RTCRtpTransceiver
-var webcamStream = null;        // MediaStream from webcam
+let myUsername = null;
+let targetUsername = null;      // To store username of other peer
+let myPeerConnection = null;    // RTCPeerConnection
+let transceiver = null;         // RTCRtpTransceiver
+let webcamStream = null;        // MediaStream from webcam
 
 // Output logging information to console.
 
 function log(text)
 {
-    var time = new Date();
+    const time = new Date();
 
     console.log("[" + time.toLocaleTimeString() + "] " + text);
 }
@@ -66,7 +66,7 @@ function log(text)
 
 function log_error(text)
 {
-    var time = new Date();
+    const time = new Date();
 
     console.trace("[" + time.toLocaleTimeString() + "] " + text);
 }
@@ -76,7 +76,7 @@ function log_error(text)
 
 function sendToServer(msg)
 {
-    var msgJSON = JSON.stringify(msg);
+    const msgJSON = JSON.stringify(msg);
 
     log("Sending '" + msg.type + "' message: " + msgJSON);
     connection.send(msgJSON);
@@ -102,11 +102,11 @@ function setUsername()
 
 function connect()
 {
-    var serverUrl = "ws://" + myHostname + ":6503";
+    const serverUrl = "ws://" + myHostname + ":6503";
 
     connection = new WebSocket(serverUrl, "json");
 
-    connection.onopen = function (evt)
+    connection.onopen = function ()
     {
         document.getElementById("text").disabled = false;
         document.getElementById("send").disabled = false;
@@ -117,15 +117,15 @@ function connect()
         console.dir(evt);
     }
 
-    connection.onmessage = function (evt)
+    connection.onmessage = async function (evt)
     {
-        var chatBox = document.querySelector(".chatbox");
-        var text = "";
-        var msg = JSON.parse(evt.data);
+        const chatBox = document.querySelector(".chatbox");
+        let text = "";
+        const msg = JSON.parse(evt.data);
         log("Message received: ");
         console.dir(msg);
-        var time = new Date(msg.date);
-        var timeStr = time.toLocaleTimeString();
+        const time = new Date(msg.date);
+        const timeStr = time.toLocaleTimeString();
 
         switch (msg.type)
         {
@@ -157,19 +157,19 @@ function connect()
             // call.
 
             case "video-offer":  // Invitation and offer to chat
-                handleVideoOfferMsg(msg);
+                await handleVideoOfferMsg(msg);
                 break;
 
             case "video-answer":  // Callee has answered our offer
-                handleVideoAnswerMsg(msg);
+                await handleVideoAnswerMsg(msg);
                 break;
 
             case "new-ice-candidate": // A new ICE candidate has been received
-                handleNewICECandidateMsg(msg);
+                await handleNewICECandidateMsg(msg);
                 break;
 
             case "hang-up": // The other peer has hung up the call
-                handleHangUpMsg(msg);
+                handleHangUpMsg();
                 break;
 
             // Unknown message; output to console for debugging.
@@ -190,46 +190,10 @@ function connect()
     };
 }
 
-// Handles a click on the Send button (or pressing return/enter) by
-// building a "message" object and sending it to the server.
-function handleSendButton()
-{
-    var msg = {
-        text: document.getElementById("text").value,
-        type: "message",
-        id: clientID,
-        date: Date.now()
-    };
-    sendToServer(msg);
-    document.getElementById("text").value = "";
-}
-
-// Handler for keyboard events. This is used to intercept the return and
-// enter keys so that we can call send() to transmit the entered text
-// to the server.
-function handleKey(evt)
-{
-    if (evt.keyCode === 13 || evt.keyCode === 14)
-    {
-        if (!document.getElementById("send").disabled)
-        {
-            handleSendButton();
-        }
-    }
-}
-
-// Create the RTCPeerConnection which knows how to talk to our
-// selected STUN/TURN server and then uses getUserMedia() to find
-// our camera and microphone and add that stream to the connection for
-// use in our video call. Then we configure event handlers to get
-// needed notifications on the call.
-
 async function createPeerConnection()
 {
     log("Setting up a connection...");
 
-    // Create an RTCPeerConnection which knows to use our chosen
-    // STUN server.
 
     myPeerConnection = new RTCPeerConnection({
         iceServers: [     // Information about ICE servers - Use your own!
@@ -267,7 +231,7 @@ async function handleNegotiationNeededEvent()
         // return to the caller. Another negotiationneeded event
         // will be fired when the state stabilizes.
 
-        if (myPeerConnection.signalingState != "stable")
+        if (myPeerConnection.signalingState !== "stable")
         {
             log("     -- The connection isn't stable yet; postponing...")
             return;
@@ -293,22 +257,7 @@ async function handleNegotiationNeededEvent()
         log("*** The following error occurred while handling the negotiationneeded event:");
         reportError(err);
     }
-    ;
 }
-
-// Called by the WebRTC layer when events occur on the media tracks
-// on our WebRTC call. This includes when streams are added to and
-// removed from the call.
-//
-// track events include the following fields:
-//
-// RTCRtpReceiver       receiver
-// MediaStreamTrack     track
-// MediaStream[]        streams
-// RTCRtpTransceiver    transceiver
-//
-// In our case, we're just taking the first stream found and attaching
-// it to the <video> element for incoming media.
 
 function handleTrackEvent(event)
 {
@@ -316,10 +265,6 @@ function handleTrackEvent(event)
     document.getElementById("received_video").srcObject = event.streams[0];
     document.getElementById("hangup-button").disabled = false;
 }
-
-// Handles |icecandidate| events by forwarding the specified
-// ICE candidate (created by our local ICE agent) to the other
-// peer through the signaling server.
 
 function handleICECandidateEvent(event)
 {
@@ -335,12 +280,7 @@ function handleICECandidateEvent(event)
     }
 }
 
-// Handle |iceconnectionstatechange| events. This will detect
-// when the ICE connection is closed, failed, or disconnected.
-//
-// This is called when the state of the ICE agent changes.
-
-function handleICEConnectionStateChangeEvent(event)
+function handleICEConnectionStateChangeEvent()
 {
     log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
 
@@ -354,62 +294,33 @@ function handleICEConnectionStateChangeEvent(event)
     }
 }
 
-// Set up a |signalingstatechange| event handler. This will detect when
-// the signaling connection is closed.
-//
-// NOTE: This will actually move to the new RTCPeerConnectionState enum
-// returned in the property RTCPeerConnection.connectionState when
-// browsers catch up with the latest version of the specification!
-
-function handleSignalingStateChangeEvent(event)
+function handleSignalingStateChangeEvent()
 {
     log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
-    switch (myPeerConnection.signalingState)
+    if (myPeerConnection.signalingState === "closed")
     {
-        case "closed":
-            closeVideoCall();
-            break;
+        closeVideoCall();
     }
 }
 
-// Handle the |icegatheringstatechange| event. This lets us know what the
-// ICE engine is currently working on: "new" means no networking has happened
-// yet, "gathering" means the ICE engine is currently gathering candidates,
-// and "complete" means gathering is complete. Note that the engine can
-// alternate between "gathering" and "complete" repeatedly as needs and
-// circumstances change.
-//
-// We don't need to do anything when this happens, but we log it to the
-// console so you can see what's going on when playing with the sample.
-
-function handleICEGatheringStateChangeEvent(event)
+function handleICEGatheringStateChangeEvent()
 {
     log("*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState);
 }
 
-// Given a message containing a list of usernames, this function
-// populates the user list box with those names, making each item
-// clickable to allow starting a video call.
-
 function handleUserlistMsg(msg)
 {
-    var i;
-    var listElem = document.querySelector(".userlistbox");
 
-    // Remove all current list members. We could do this smarter,
-    // by adding and updating users instead of rebuilding from
-    // scratch but this will do for this sample.
+    const listElem = document.querySelector(".userlistbox");
 
     while (listElem.firstChild)
     {
         listElem.removeChild(listElem.firstChild);
     }
 
-    // Add member names from the received list.
-
     msg.users.forEach(function (username)
     {
-        var item = document.createElement("li");
+        const item = document.createElement("li");
         item.appendChild(document.createTextNode(username));
         item.addEventListener("click", invite, false);
 
@@ -417,25 +328,16 @@ function handleUserlistMsg(msg)
     });
 }
 
-// Close the RTCPeerConnection and reset variables so that the user can
-// make or receive another call if they wish. This is called both
-// when the user hangs up, the other user hangs up, or if a connection
-// failure is detected.
-
 function closeVideoCall()
 {
-    var localVideo = document.getElementById("local_video");
+    const localVideo = document.getElementById("local_video");
 
     log("Closing the call");
 
-    // Close the RTCPeerConnection
 
     if (myPeerConnection)
     {
         log("--> Closing the peer connection");
-
-        // Disconnect all our event listeners; we don't want stray events
-        // to interfere with the hangup while it's ongoing.
 
         myPeerConnection.ontrack = null;
         myPeerConnection.onnicecandidate = null;
@@ -480,7 +382,7 @@ function closeVideoCall()
 // Handle the "hang-up" message, which is sent if the other peer
 // has hung up the call or otherwise disconnected.
 
-function handleHangUpMsg(msg)
+function handleHangUpMsg()
 {
     log("*** Received hang up notification from other peer");
 
@@ -518,7 +420,7 @@ async function invite(evt)
         alert("You can't start a call because you already have one open!");
     } else
     {
-        var clickedUsername = evt.target.textContent;
+        const clickedUsername = evt.target.textContent;
 
         // Don't allow users to call themselves, because weird.
 
@@ -539,7 +441,7 @@ async function invite(evt)
         // not linked together in any way yet.
 
         log("Setting up connection to invite user: " + targetUsername);
-        createPeerConnection();
+        await createPeerConnection();
 
         // Get access to the webcam stream and attach it to the
         // "preview" box (id "local_video").
@@ -582,17 +484,17 @@ async function handleVideoOfferMsg(msg)
     log("Received video chat offer from " + targetUsername);
     if (!myPeerConnection)
     {
-        createPeerConnection();
+        await createPeerConnection();
     }
 
     // We need to set the remote description to the received SDP offer
     // so that our local WebRTC layer knows how to talk to the caller.
 
-    var desc = new RTCSessionDescription(msg.sdp);
+    const desc = new RTCSessionDescription(msg.sdp);
 
     // If the connection isn't stable yet, wait for it...
 
-    if (myPeerConnection.signalingState != "stable")
+    if (myPeerConnection.signalingState !== "stable")
     {
         log("  - But the signaling state isn't stable, so triggering rollback");
 
@@ -659,7 +561,7 @@ async function handleVideoAnswerMsg(msg)
     // Configure the remote description, which is the SDP payload
     // in our "video-answer" message.
 
-    var desc = new RTCSessionDescription(msg.sdp);
+    const desc = new RTCSessionDescription(msg.sdp);
     await myPeerConnection.setRemoteDescription(desc).catch(reportError);
 }
 
@@ -669,7 +571,7 @@ async function handleVideoAnswerMsg(msg)
 
 async function handleNewICECandidateMsg(msg)
 {
-    var candidate = new RTCIceCandidate(msg.candidate);
+    const candidate = new RTCIceCandidate(msg.candidate);
 
     log("*** Adding received ICE candidate: " + JSON.stringify(candidate));
     try
