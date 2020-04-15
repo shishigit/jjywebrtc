@@ -1,44 +1,28 @@
 <!doctype html>
-
-<!--
-    WebSocket chat client
-
-    WebSocket and WebRTC based multi-user chat sample with two-way video
-    calling, including use of TURN if applicable or necessary.
-
-    This file provides the structure of the chat client's web page, including
-    logging in, text chatting, and making private video calls to other users.
-
-    To read about how this sample works:  http://bit.ly/webrtc-from-chat
-
-    Any copyright is dedicated to the Public Domain.
-    http:   creativecommons.org/publicdomain/zero/1.0/
--->
-
-<html>
-
+<html lang="zh">
 <head>
-  <title>WebSocket Chat Demo with WebRTC Calling</title>
-  <meta charset="utf-8">
-  <link href="chat.css" rel="stylesheet">
-  <script type="text/javascript" src="chatclient.js"></script>
-  <script src="adapter.js"></script>
+    <title>WebSocket Chat Demo with WebRTC Calling</title>
+    <meta charset="utf-8">
+    <link href="chat.css" rel="stylesheet">
+    <script type="text/javascript" src="chatclient.js"></script>
+    <script src="adapter.js"></script>
 </head>
 
 <body>
-  <div class="container">
+<div class="container">
     <div class="infobox">
-      <p>Enter a username: <input id="name" type="text" maxlength="12" required autocomplete="username"
-          inputmode="verbatim" placeholder="Username">
-        <input type="button" name="login" value="Log in" onclick="connect()"></p>
+        <p>Enter a username:
+            <input id="name" type="text">
+            <input type="button" name="login" value="Log in" onclick="connect()">
+        </p>
     </div>
     <ul class="userlistbox"></ul>
     <div class="camerabox">
-      <video id="received_video" autoplay></video>
-      <video id="local_video" autoplay muted></video>
+        <video id="received_video" autoplay></video>
+        <video id="local_video" autoplay muted></video>
     </div>
     <div class="empty-container"></div>
-  </div>
+</div>
 </body>
 
 </html>
