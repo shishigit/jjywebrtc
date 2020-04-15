@@ -220,15 +220,9 @@ async function createPeerConnection()
         }
     }
 
-    myPeerConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
-    myPeerConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
-    myPeerConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
     myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
     myPeerConnection.ontrack = handleTrackEvent;
 }
-
-// Called by the WebRTC layer to let us know when it's time to
-// begin, resume, or restart ICE negotiation.
 
 async function handleNegotiationNeededEvent()
 {
@@ -239,23 +233,14 @@ async function handleNegotiationNeededEvent()
         log("---> Creating offer");
         const offer = await myPeerConnection.createOffer();
 
-        // If the connection hasn't yet achieved the "stable" state,
-        // return to the caller. Another negotiationneeded event
-        // will be fired when the state stabilizes.
-
         if (myPeerConnection.signalingState !== "stable")
         {
             log("     -- The connection isn't stable yet; postponing...")
             return;
         }
 
-        // Establish the offer as the local peer's current
-        // description.
-
         log("---> Setting local description to the offer");
         await myPeerConnection.setLocalDescription(offer);
-
-        // Send the offer to the remote peer.
 
         log("---> Sending the offer to the remote peer");
         sendToServer({
@@ -277,35 +262,6 @@ function handleTrackEvent(event)
     document.getElementById("received_video").srcObject = event.streams[0];
     document.getElementById("hangup-button").disabled = false;
 }
-
-function handleICEConnectionStateChangeEvent()
-{
-    log("*** ICE connection state changed to " + myPeerConnection.iceConnectionState);
-
-    switch (myPeerConnection.iceConnectionState)
-    {
-        case "closed":
-        case "failed":
-        case "disconnected":
-            closeVideoCall();
-            break;
-    }
-}
-
-function handleSignalingStateChangeEvent()
-{
-    log("*** WebRTC signaling state changed to: " + myPeerConnection.signalingState);
-    if (myPeerConnection.signalingState === "closed")
-    {
-        closeVideoCall();
-    }
-}
-
-function handleICEGatheringStateChangeEvent()
-{
-    log("*** ICE gathering state changed to: " + myPeerConnection.iceGatheringState);
-}
-
 function handleUserlistMsg(msg)
 {
 
