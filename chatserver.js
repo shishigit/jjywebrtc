@@ -1,7 +1,6 @@
 "use strict";
 
 const http = require('http');
-const https = require('https');
 require('fs');
 const WebSocketServer = require('websocket').server;
 
@@ -9,22 +8,6 @@ let connectionArray = [];
 let nextID = Date.now();
 let appendToMakeUnique = 1;
 
-
-function log(text)
-{
-    const time = new Date();
-
-    console.log("[" + time.toLocaleTimeString() + "] " + text);
-}
-
-function originIsAllowed()
-{
-    return true;    // We will accept all connections
-}
-
-// Scans the list of users and see if the specified name is unique. If it is,
-// return true. Otherwise, returns false. We want all users to have unique
-// names.
 function isUsernameUnique(name)
 {
     let isUnique = true;
@@ -99,10 +82,6 @@ function makeUserListMessage()
     return userListMsg;
 }
 
-// Sends a "userlist" message to all chat members. This is a cheesy way
-// to ensure that every join/drop is reflected everywhere. It would be more
-// efficient to send simple join/drop messages to each user, but this is
-// good enough for this simple example.
 function sendUserListToAll()
 {
     const userListMsg = makeUserListMessage();
@@ -119,7 +98,6 @@ let webServer = http.createServer({}, handleWebRequest);
 
 function handleWebRequest(request, response)
 {
-    log("Received request for " + request.url);
     response.writeHead(404);
     response.end();
 }
@@ -129,7 +107,6 @@ function handleWebRequest(request, response)
 
 webServer.listen(6503, function ()
 {
-    log("Server is listening on port 6503");
 });
 
 // Create the WebSocket server by converting the HTTPS server into one.
@@ -146,15 +123,12 @@ if (!wsServer)
 
 wsServer.on('request', function (request)
 {
-
     const connection = request.accept("json", request.origin);
-
 
     connectionArray.push(connection);
 
     connection.clientID = nextID;
     nextID++;
-
 
     let msg = {
         type: "id",
