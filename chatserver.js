@@ -75,6 +75,7 @@ wsServer.on('connection', function (connection)
 {
     connectionArray.push(connection);
     connection.clientID = lianjieid;
+    connection.username = lianjieid;
     lianjieid++;
 
     // 设定ID
@@ -82,6 +83,8 @@ wsServer.on('connection', function (connection)
         type: "id",
         id: connection.clientID
     }));
+
+    sendUserListToAll();
 
     connection.on('message', function (message)
     {
@@ -94,33 +97,6 @@ wsServer.on('connection', function (connection)
             case "message":
                 msg.name = connect.username;
                 msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
-                break;
-
-            case "username":
-                let nameChanged = false;
-                const origName = msg.name;
-
-                while (!isUsernameUnique(msg.name))
-                {
-                    msg.name = origName + appendToMakeUnique;
-                    appendToMakeUnique++;
-                    nameChanged = true;
-                }
-
-                if (nameChanged)
-                {
-                    const changeMsg = {
-                        id: msg.id,
-                        type: "rejectusername",
-                        name: msg.name
-                    };
-                    // noinspection JSUnresolvedFunction
-                    connect.sendUTF(JSON.stringify(changeMsg));
-                }
-
-                connect.username = msg.name;
-                sendUserListToAll();
-                sendToClients = false;
                 break;
         }
 

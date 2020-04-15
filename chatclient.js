@@ -12,21 +12,7 @@ let webcamStream = null;        // MediaStream from webcam
 
 function sendToServer(msg)
 {
-    const msgJSON = JSON.stringify(msg);
-
-    connection.send(msgJSON);
-}
-
-function setUsername()
-{
-    myUsername = document.getElementById("name").value;
-
-    sendToServer({
-        name: myUsername,
-        date: Date.now(),
-        id: clientID,
-        type: "username"
-    });
+    connection.send(JSON.stringify(msg));
 }
 
 function connect()
@@ -34,11 +20,6 @@ function connect()
     const serverUrl = "ws://" + window.location.hostname + ":6503";
 
     connection = new WebSocket(serverUrl, "json");
-
-    connection.onerror = function (evt)
-    {
-        console.dir(evt);
-    }
 
     connection.onmessage = async function (evt)
     {
@@ -49,7 +30,7 @@ function connect()
         {
             case "id":
                 clientID = msg.id;
-                setUsername();
+                myUsername = msg.id;
                 break;
 
             case "userlist":
