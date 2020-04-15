@@ -82,7 +82,8 @@ function sendUserListToAll()
 }
 
 
-const wsServer = new WebSocketServer.Server({port: 6503});
+// noinspection JSCheckFunctionSignatures
+const wsServer = new WebSocketServer.Server({port: 6503}, null);
 
 wsServer.on('connection', function (connection)
 {
@@ -90,16 +91,15 @@ wsServer.on('connection', function (connection)
     connection.clientID = nextID;
     nextID++;
 
-    let msg = {
+    connection.send(JSON.stringify({
         type: "id",
         id: connection.clientID
-    };
-    connection.send(JSON.stringify(msg));
+    }));
 
     connection.on('message', function (message)
     {
         let sendToClients = true;
-        msg = JSON.parse(message);
+        let msg = JSON.parse(message);
         const connect = getConnectionForID(msg.id);
 
         switch (msg.type)
