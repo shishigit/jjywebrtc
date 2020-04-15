@@ -41,7 +41,7 @@ function getConnectionForID(id)
     return connectionArray.filter(value => value.clientID === id).pop()
 }
 
-function makeUserListMessage()
+function sendUserListToAll()
 {
     const userListMsg = {
         type: "userlist",
@@ -54,14 +54,7 @@ function makeUserListMessage()
         userListMsg.users.push(connectionArray[i].username);
     }
 
-    return userListMsg;
-}
-
-function sendUserListToAll()
-{
-    const userListMsg = makeUserListMessage();
     const userListMsgStr = JSON.stringify(userListMsg);
-    let i;
 
     for (i = 0; i < connectionArray.length; i++)
     {
