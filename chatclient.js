@@ -171,9 +171,6 @@ function connect()
 
 async function createPeerConnection()
 {
-    log("Setting up a connection...");
-
-
     myPeerConnection = new RTCPeerConnection({
         iceServers: [
             {
@@ -189,8 +186,6 @@ async function createPeerConnection()
     {
         if (event.candidate)
         {
-            log("*** Outgoing ICE candidate: " + event.candidate.candidate);
-
             sendToServer({
                 type: "new-ice-candidate",
                 target: targetUsername,
@@ -199,39 +194,37 @@ async function createPeerConnection()
         }
     }
 
-    myPeerConnection.onnegotiationneeded = handleNegotiationNeededEvent;
-    myPeerConnection.ontrack = handleTrackEvent;
-}
-
-async function handleNegotiationNeededEvent()
-{
-
-    log("---> Creating offer");
-    const offer = await myPeerConnection.createOffer();
-
-    if (myPeerConnection.signalingState !== "stable")
+    myPeerConnection.onnegotiationneeded = async function ()
     {
-        log("     -- The connection isn't stable yet; postponing...")
-        return;
+
+        log("---> Creating offer");
+        const offer = await myPeerConnection.createOffer();
+
+        if (myPeerConnection.signalingState !== "stable")
+        {
+            log("     -- The connection isn't stable yet; postponing...")
+            return;
+        }
+
+        log("---> Setting local description to the offer");
+        await myPeerConnection.setLocalDescription(offer);
+
+        log("---> Sending the offer to the remote peer");
+        sendToServer({
+            name: myUsername,
+            target: targetUsername,
+            type: "video-offer",
+            sdp: myPeerConnection.localDescription
+        });
+
     }
-
-    log("---> Setting local description to the offer");
-    await myPeerConnection.setLocalDescription(offer);
-
-    log("---> Sending the offer to the remote peer");
-    sendToServer({
-        name: myUsername,
-        target: targetUsername,
-        type: "video-offer",
-        sdp: myPeerConnection.localDescription
-    });
-
-}
-
-function handleTrackEvent(event)
-{
-    log("*** Track event");
-    document.getElementById("received_video").srcObject = event.streams[0];
+    ;
+    myPeerConnection.ontrack = function (event)
+    {
+        log("*** Track event");
+        document.getElementById("received_video").srcObject = event.streams[0];
+    }
+    ;
 }
 
 function handleUserlistMsg(msg)
