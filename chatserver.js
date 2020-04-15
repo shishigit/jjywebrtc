@@ -1,8 +1,7 @@
 "use strict";
 
-const http = require('http');
-require('fs');
-const WebSocketServer = require('websocket').server;
+
+const WebSocketServer = require('ws');
 
 let connectionArray = [];
 let nextID = Date.now();
@@ -35,15 +34,12 @@ function sendToOneUser(target, msgString)
     {
         if (connectionArray[i].username === target)
         {
-            connectionArray[i].sendUTF(msgString);
+            connectionArray[i].send(msgString);
             break;
         }
     }
 }
 
-// Scan the list of connections and return the one for the specified
-// clientID. Each login gets an ID that doesn't change during the session,
-// so it can be tracked across username changes.
 function getConnectionForID(id)
 {
     let connect = null;
@@ -61,9 +57,6 @@ function getConnectionForID(id)
     return connect;
 }
 
-// Builds a message object of type "userlist" which contains the names of
-// all connected users. Used to ramp up newly logged-in users and,
-// inefficiently, to handle name change notifications.
 function makeUserListMessage()
 {
     const userListMsg = {
@@ -90,35 +83,16 @@ function sendUserListToAll()
 
     for (i = 0; i < connectionArray.length; i++)
     {
-        connectionArray[i].sendUTF(userListMsgStr);
+        connectionArray[i].send(userListMsgStr);
     }
 }
 
-let webServer = http.createServer({}, handleWebRequest);
 
-function handleWebRequest(request, response)
+const wsServer = new WebSocketServer.Server({port: 6503});
+
+wsServer.on('connection', function (connection)
 {
-    response.writeHead(404);
-    response.end();
-}
-
-// Spin up the HTTPS server on the port assigned to this sample.
-// This will be turned into a WebSocket port very shortly.
-
-webServer.listen(6503, function ()
-{
-});
-
-
-const wsServer = new WebSocketServer({httpServer: webServer, autoAcceptConnections: false});
-
-// noinspection JSUnresolvedFunction
-wsServer.on('request', function (request)
-{
-    const connection = request.accept("json", request.origin);
-
     connectionArray.push(connection);
-
     connection.clientID = nextID;
     nextID++;
 
@@ -126,13 +100,12 @@ wsServer.on('request', function (request)
         type: "id",
         id: connection.clientID
     };
-    connection.sendUTF(JSON.stringify(msg));
+    connection.send(JSON.stringify(msg));
 
     connection.on('message', function (message)
     {
-
         let sendToClients = true;
-        msg = JSON.parse(message.utf8Data);
+        msg = JSON.parse(message);
         const connect = getConnectionForID(msg.id);
 
         switch (msg.type)
@@ -183,7 +156,7 @@ wsServer.on('request', function (request)
             {
                 for (i = 0; i < connectionArray.length; i++)
                 {
-                    connectionArray[i].sendUTF(msgString);
+                    connectionArray[i].send(msgString);
                 }
             }
         }
