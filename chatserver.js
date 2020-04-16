@@ -11,7 +11,7 @@ function sendToOneUser(target, msgString)
 
     for (i = 0; i < connectionArray.length; i++)
     {
-        if (connectionArray[i].username === target)
+        if (connectionArray[i].username == target)
         {
             connectionArray[i].send(msgString);
             break;
@@ -51,8 +51,8 @@ wsServer.on('connection', function (connection)
     {
         let sendToClients = true;
         let msg = JSON.parse(message);
-        console.log(message)
-        const connect = connectionArray.filter(value => value.clientID === message.id).pop();
+        console.log(msg)
+        const connect = connectionArray.filter(value => value.username.toString() === msg.target).pop();
 
         if (msg.type === "message")
         {
@@ -63,13 +63,13 @@ wsServer.on('connection', function (connection)
         if (sendToClients)
         {
             const msgString = JSON.stringify(msg);
-            let i;
 
             if (msg.target && msg.target.length !== 0)
             {
                 sendToOneUser(msg.target, msgString);
             } else
             {
+                let i;
                 for (i = 0; i < connectionArray.length; i++)
                 {
                     connectionArray[i].send(msgString);
