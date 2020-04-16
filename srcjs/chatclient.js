@@ -1,7 +1,6 @@
 "use strict";
 
 let connection = null;
-let clientID = 0;
 
 let myUsername = null;
 let targetUsername = null;      // To store username of other peer
@@ -29,7 +28,6 @@ function connect()
         switch (msg.type)
         {
             case "id":
-                clientID = msg.id;
                 myUsername = msg.id;
                 break;
 
