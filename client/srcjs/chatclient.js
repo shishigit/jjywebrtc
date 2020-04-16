@@ -8,7 +8,6 @@ let peerConnection = null;
 let transceiver = null;
 let webcamStream = null;
 
-
 function sendToServer(msg)
 {
     connection.send(JSON.stringify(msg));
