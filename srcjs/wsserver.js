@@ -14,7 +14,7 @@ wsServer.on('connection', function (connection)
     connection.username = lianjieid.toString();
     lianjieid++;
 
-    console.log('当前连接：', connectionArray)
+    console.log('当前连接：', connectionArray.map(value => value.username))
 
     connection.send(JSON.stringify({
         type: "id",
