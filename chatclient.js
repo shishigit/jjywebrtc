@@ -119,7 +119,6 @@ function handleUserlistMsg(msg)
 async function invite(evt)
 {
     targetUsername = evt.target.textContent;
-    console.log(evt.target.textContent)
     await createPeerConnection();
     webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
     document.getElementById("local_video").srcObject = webcamStream;
