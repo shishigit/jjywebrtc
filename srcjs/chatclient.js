@@ -17,6 +17,7 @@ function sendToServer(msg)
 
 export function connect()
 {
+    console.log('链接WS服务器')
     const serverUrl = "ws://" + window.location.hostname + ":6503";
 
     connection = new WebSocket(serverUrl, "json");
@@ -28,10 +29,12 @@ export function connect()
         switch (msg.type)
         {
             case "id":
+                console.log('本地id：', msg.id)
                 myUsername = msg.id;
                 break;
 
             case "userlist":
+                console.log('当前人员：', msg)
                 handleUserlistMsg(msg);
                 break;
 
