@@ -1,3 +1,5 @@
 .idea
 */node_modules
 ceshi
+/client/srcjs/fromts/
+/server/*.js
