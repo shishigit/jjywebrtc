@@ -1,4 +1,4 @@
-import * as JJYUserMedia from "./fromts/JJYUserMedia.js";
+import {JJYUserMedia} from "./fromts/JJYUserMedia.js";
 
 let connection = null;
 
