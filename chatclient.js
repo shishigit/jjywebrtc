@@ -140,7 +140,6 @@ async function handleVideoOfferMsg(msg)
 
     await peerConnection.setRemoteDescription(desc);
 
-
     if (!webcamStream)
     {
         webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
