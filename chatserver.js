@@ -4,6 +4,7 @@ const WebSocketServer = require('ws');
 
 let connectionArray = [];
 let lianjieid = Date.now();
+
 function sendToOneUser(target, msgString)
 {
     let i;
@@ -16,11 +17,6 @@ function sendToOneUser(target, msgString)
             break;
         }
     }
-}
-
-function getConnectionForID(id)
-{
-    return connectionArray.filter(value => value.clientID === id).pop()
 }
 
 function sendUserListToAll()
@@ -55,7 +51,8 @@ wsServer.on('connection', function (connection)
     {
         let sendToClients = true;
         let msg = JSON.parse(message);
-        const connect = getConnectionForID(msg.id);
+        console.log(message)
+        const connect = connectionArray.filter(value => value.clientID === message.id).pop();
 
         if (msg.type === "message")
         {
