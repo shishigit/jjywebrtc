@@ -1,8 +1,8 @@
 {
-  "name": "webrtc-from-chat",
-  "version": "1.2.0",
+  "name": "server",
+  "version": "1.0.0",
   "scripts": {
-    "dev-server": "ts-node server/WSServer.ts"
+    "server": "ts-node WSServer.ts"
   },
   "dependencies": {
     "ws": "^7.2.3"
