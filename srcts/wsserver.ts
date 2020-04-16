@@ -1,12 +1,11 @@
-import WS from "ws";
 import WebSocket from "ws";
 
 let connectionArray: { id: string, socket: WebSocket }[] = [];
 let lianjieid = Date.now();
 
-const wsServer = new WS.Server({port: 6503}, () => console.log('系统启动'));
+const wsServer = new WebSocket.Server({port: 6503}, () => console.log('系统启动'));
 
-wsServer.on('connection', function (connection)
+wsServer.on('connection', function (connection: WebSocket)
 {
     // 设定ID
     connectionArray.push({id: lianjieid.toString(), socket: connection});
