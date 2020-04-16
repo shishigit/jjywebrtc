@@ -5,7 +5,6 @@ const WebSocketServer = require('ws');
 let connectionArray = [];
 let lianjieid = Date.now();
 
-
 const wsServer = new WebSocketServer.Server({port: 6503}, () => console.log('系统启动'));
 
 wsServer.on('connection', function (connection)
