@@ -5,20 +5,6 @@ const WebSocketServer = require('ws');
 let connectionArray = [];
 let lianjieid = Date.now();
 
-function sendToOneUser(target, msgString)
-{
-    let i;
-
-    for (i = 0; i < connectionArray.length; i++)
-    {
-        if (connectionArray[i].username == target)
-        {
-            connectionArray[i].send(msgString);
-            break;
-        }
-    }
-}
-
 function sendUserListToAll()
 {
     const yonghuliebiao = {
@@ -35,14 +21,13 @@ const wsServer = new WebSocketServer.Server({port: 6503}, () => console.log('系
 wsServer.on('connection', function (connection)
 {
     connectionArray.push(connection);
-    connection.clientID = lianjieid;
-    connection.username = lianjieid;
+    connection.username = lianjieid.toString();
     lianjieid++;
 
     // 设定ID
     connection.send(JSON.stringify({
         type: "id",
-        id: connection.clientID
+        id: connection.username
     }));
 
     sendUserListToAll();
@@ -50,7 +35,8 @@ wsServer.on('connection', function (connection)
     connection.on('message', function (message)
     {
         let msg = JSON.parse(message);
-        sendToOneUser(msg.target, message);
+        connectionArray.filter(value => value.username === msg.target).pop().send(message)
+
     });
 
     connection.on('close', function ()
