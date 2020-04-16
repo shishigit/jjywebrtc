@@ -25,7 +25,6 @@ function connect()
     connection.onmessage = async function (evt)
     {
         const msg = JSON.parse(evt.data);
-        console.dir(msg);
 
         switch (msg.type)
         {
@@ -109,6 +108,7 @@ function handleUserlistMsg(msg)
 
     msg.users.forEach(function (username)
     {
+        if (username === myUsername) return
         const item = document.createElement("li");
         item.appendChild(document.createTextNode(username));
         item.addEventListener("click", invite, false);
@@ -138,13 +138,6 @@ async function handleVideoOfferMsg(msg)
 
     const desc = new RTCSessionDescription(msg.sdp);
 
-
-    if (peerConnection.signalingState !== "stable")
-    {
-        await peerConnection.setLocalDescription({type: "rollback"})
-        await peerConnection.setRemoteDescription(desc)
-        return;
-    }
     await peerConnection.setRemoteDescription(desc);
 
 
