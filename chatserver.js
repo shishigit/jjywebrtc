@@ -9,9 +9,8 @@ function sendUserListToAll()
 {
     const yonghuliebiao = {
         type: "userlist",
-        users: []
+        users: connectionArray.map(value => value.username)
     };
-    connectionArray.forEach(value => yonghuliebiao.users.push(value.username))
     const userListMsgStr = JSON.stringify(yonghuliebiao);
     connectionArray.forEach(value => value.send(userListMsgStr))
 }
