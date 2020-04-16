@@ -3,10 +3,10 @@ import {JJYUserMedia} from "./fromts/ts_rtc/JJYUserMedia.js";
 let connection = null;
 
 let myUsername = null;
-let targetUsername = null;      // To store username of other peer
-let peerConnection = null;    // RTCPeerConnection
-let transceiver = null;         // RTCRtpTransceiver
-let webcamStream = null;        // MediaStream from webcam
+let targetUsername = null;
+let peerConnection = null;
+let transceiver = null;
+let webcamStream = null;
 
 
 function sendToServer(msg)
