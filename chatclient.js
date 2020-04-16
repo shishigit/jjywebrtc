@@ -141,10 +141,8 @@ async function handleVideoOfferMsg(msg)
 
     if (peerConnection.signalingState !== "stable")
     {
-        await Promise.all([
-            peerConnection.setLocalDescription({type: "rollback"}),
-            peerConnection.setRemoteDescription(desc)
-        ]);
+        await peerConnection.setLocalDescription({type: "rollback"})
+        await peerConnection.setRemoteDescription(desc)
         return;
     }
     await peerConnection.setRemoteDescription(desc);
@@ -158,7 +156,6 @@ async function handleVideoOfferMsg(msg)
             transceiver = track => peerConnection.addTransceiver(track, {streams: [webcamStream]})
         );
     }
-
 
     await peerConnection.setLocalDescription(await peerConnection.createAnswer());
 
