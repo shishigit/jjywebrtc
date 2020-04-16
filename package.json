@@ -2,7 +2,7 @@
   "name": "webrtc-from-chat",
   "version": "1.2.0",
   "scripts": {
-    "dev-server": "node ceshiyemian/chatserver.js"
+    "dev-server": "node srcjs/chatserver.js"
   },
   "dependencies": {
     "ws": "^7.2.3"
