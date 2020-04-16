@@ -16,7 +16,7 @@
     // "sourceMap": true,                     /* Generates corresponding '.map' file. */
     "outDir": "./srcjs/fromts/",
     /* Redirect output structure to the directory. */
-    "rootDir": "./ts_rtc/",
+    "rootDir": "./srcts/",
     /* Specify the root directory of input files. Use to control the output directory structure with --outDir. */
     // "composite": true,                     /* Enable project compilation */
     // "tsBuildInfoFile": "./",               /* Specify file to store incremental compilation information */

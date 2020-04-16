@@ -2,13 +2,14 @@
   "name": "webrtc-from-chat",
   "version": "1.2.0",
   "scripts": {
-    "dev-server": "node ts_ws/wsserver.ts"
+    "dev-server": "ts-node srcts/wsserver.ts"
   },
   "dependencies": {
     "ws": "^7.2.3"
   },
   "devDependencies": {
     "@types/ws": "^7.2.4",
+    "ts-node": "^8.8.2",
     "typescript": "^3.8.3"
   }
 }
