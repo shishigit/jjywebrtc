@@ -7,11 +7,10 @@ let lianjieid = Date.now();
 
 function sendUserListToAll()
 {
-    const yonghuliebiao = {
+    const userListMsgStr = JSON.stringify({
         type: "userlist",
         users: connectionArray.map(value => value.username)
-    };
-    const userListMsgStr = JSON.stringify(yonghuliebiao);
+    });
     connectionArray.forEach(value => value.send(userListMsgStr))
 }
 
