@@ -1,3 +1,5 @@
+import {JJYUserMedia} from "./fromts/JJYUserMedia.js";
+
 let connection = null;
 
 let myUsername = null;
@@ -119,7 +121,7 @@ async function invite(evt)
 {
     targetUsername = evt.target.textContent;
     await createPeerConnection();
-    webcamStream = await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+    webcamStream = await JJYUserMedia.huoqumeiti();
     document.getElementById("local_video").srcObject = webcamStream;
     webcamStream.getTracks().forEach(
         transceiver = track => peerConnection.addTransceiver(track, {streams: [webcamStream]})
