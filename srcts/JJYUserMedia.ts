@@ -1,4 +1,4 @@
-export class Meiti
+export class JJYUserMedia
 {
     static huoqumeiti(): Promise<MediaStream>
     {
