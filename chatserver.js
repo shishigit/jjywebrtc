@@ -49,33 +49,8 @@ wsServer.on('connection', function (connection)
 
     connection.on('message', function (message)
     {
-        let sendToClients = true;
         let msg = JSON.parse(message);
-        console.log(msg)
-        const connect = connectionArray.filter(value => value.username.toString() === msg.target).pop();
-
-        if (msg.type === "message")
-        {
-            msg.name = connect.username;
-            msg.text = msg.text.replace(/(<([^>]+)>)/ig, "");
-        }
-
-        if (sendToClients)
-        {
-            const msgString = JSON.stringify(msg);
-
-            if (msg.target && msg.target.length !== 0)
-            {
-                sendToOneUser(msg.target, msgString);
-            } else
-            {
-                let i;
-                for (i = 0; i < connectionArray.length; i++)
-                {
-                    connectionArray[i].send(msgString);
-                }
-            }
-        }
+        sendToOneUser(msg.target, message);
     });
 
     connection.on('close', function ()
