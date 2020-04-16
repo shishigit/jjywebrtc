@@ -13,6 +13,7 @@ wsServer.on('connection', function (connection)
     connectionArray.push(connection);
     connection.username = lianjieid.toString();
     lianjieid++;
+    console.log('新连接：', connection.username)
 
     connection.send(JSON.stringify({
         type: "id",
