@@ -15,7 +15,7 @@ function sendToServer(msg)
     console.log(msg)
 }
 
-function connect()
+export function connect()
 {
     const serverUrl = "ws://" + window.location.hostname + ":6503";
 
